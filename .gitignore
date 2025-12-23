@@ -1,0 +1,7 @@
+# Config files with sensitive data (DB logins, API servers):
+config.lua
+client/config.lua
+web/lib/Config.php
+
+# Local data files:
+anime-titles.xml.gz

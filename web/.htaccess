@@ -1,0 +1,12 @@
+# Deny access to everything by default
+<FilesMatch ".*">
+    Require all denied
+</FilesMatch>
+
+# Allow only PHP files in the api/ folder
+<Directory "api">
+    Require all granted
+</Directory>
+
+# Prevent directory listings
+Options -Indexes

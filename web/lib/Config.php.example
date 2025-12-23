@@ -1,0 +1,15 @@
+<?php
+final class Config
+{
+    public static function get(): array
+    {
+        return [
+            'db' => [
+                'dsn'  => 'mysql:host=localhost;dbname=anidbmirror;charset=utf8mb4',
+                'user' => 'username',
+                'pass' => 'password',
+            ],
+            'reservationTimeoutSeconds' => 172800,
+        ];
+    }
+}
