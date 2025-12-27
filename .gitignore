@@ -5,3 +5,4 @@ web/lib/Config.php
 
 # Local data files:
 anime-titles.xml.gz
+client/AniDB/
