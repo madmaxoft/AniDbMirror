@@ -58,7 +58,7 @@ local function commitFile(aFileName)
 	local lastMod = lfs.attributes(aFileName, "modification")
 
 	-- Commit the file:
-	local url = config.apiBaseUrl .. "/submitChunk.php"
+	local url = config.apiBaseUrl .. "/submit"
 	local body =
 		"id=" .. tostring(id) ..
 		"&lastMod=" .. tostring(lastMod) ..

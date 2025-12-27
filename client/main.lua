@@ -4,6 +4,8 @@
 AniDbMirror Lua client main loop.
 Queries the AniDbMirror CnC server for anime details to download, then downloads them
 and commits them back to the CnC server.
+
+Requires LuaJit or Lua 5.2+ to run.
 --]]
 
 
@@ -13,10 +15,10 @@ and commits them back to the CnC server.
 local socket = require("socket")
 local sockethttp = require("socket.http")
 local ltn12 = require("ltn12")
+local expat = require("lxp")
 local lom = require("lxp.lom")
 local lfs = require("lfs")
 local zlib = require("zlib")
-local expat = require("lxp")
 
 local config = require("config")
 local http = require("http")
@@ -27,8 +29,9 @@ local utils = require("utils")
 
 
 --- Log a message with timestamp
-local function log(aMsg)
-	print(os.date("%Y-%m-%d %H:%M:%S") .. " | " .. aMsg)
+local function log(aMsg, ...)
+	local msg = string.format(aMsg, ...)
+	print(os.date("%Y-%m-%d %H:%M:%S") .. " | " .. msg)
 end
 
 
@@ -38,7 +41,7 @@ end
 --- Check server status
 -- Returns true if the server replies as expected
 local function checkServer()
-	local url = config.apiBaseUrl .. "/status.php"
+	local url = config.apiBaseUrl .. "/status"
 	local resp, err = http.get(url)
 	if not resp then
 		return nil, err
@@ -56,7 +59,7 @@ end
 --- Request a single work item
 -- Returns the lua table returned from the API call
 local function requestWork()
-	local url = config.apiBaseUrl .. "/requestChunk.php"
+	local url = config.apiBaseUrl .. "/reserve"
 	local body = ""
 	return http.post(url, body)
 end
@@ -69,7 +72,7 @@ end
 local function abortWork(aId)
 	assert(tonumber(aId))
 
-	local url = config.apiBaseUrl .. "/giveBackChunk.php"
+	local url = config.apiBaseUrl .. "/giveBack"
 	local body = "id=" .. tostring(aId)
 	return http.post(url, body)
 end
@@ -83,7 +86,7 @@ local function commitWork(aId, aResult)
 	assert(tonumber(aId))
 	assert(type(aResult) == "string")
 
-	local url = config.apiBaseUrl .. "/submitChunk.php"
+	local url = config.apiBaseUrl .. "/submit"
 	local body =
 		"id=" .. tostring(aId) ..
 		"&detailsBlobB64=" .. utils.base64Encode(aResult)
@@ -167,10 +170,10 @@ local function processWork(aId)
 		(parsedLom.tag == "error") and
 		((parsedLom.attr or {}).code == "500")
 	) then
-		log("API returned rate-limit response for aid " .. aId .. ", stored to file " .. fileName)
+		log("API returned rate-limit response for aid %d.", aId)
 		log("Waiting for 3 hours before re-requesting.")
 		abortWork(aId)
-		socket.sleep(3 * 60 * 60)
+		socket.sleep(3 * 60 * 60 + 60)  -- Wait for a bit longer than 3 hours to not hit the end of a rate-limit window aligned to 3-hours
 		return nil, "rate-lmit"
 	end
 
@@ -191,10 +194,10 @@ if not ok then
 end
 log("Server verified")
 
--- while true do
+while true do
 	local resp, err = requestWork()
 	if not(resp) then
-		log("reserve failed: " .. tostring(err))
+		log("reserve failed: %s", tostring(err))
 		socket.sleep(config.pollDelaySeconds)
 		goto continue
 	end
@@ -206,22 +209,22 @@ log("Server verified")
 	end
 
 	local id = resp.id
-	log("Reserved id " .. tostring(id))
+	log("Reserved id %s", tostring(id))
 
 	local result, msg = processWork(id)
 	if not(result) then
-		log("processing failed: " .. tostring(msg))
+		log("Processing failed: %s", tostring(msg))
 		os.exit(1)
 	end
 
 	local commitResp, commitErr = commitWork(id, result)
 	if not(commitResp) then
-		log("commit failed: " .. tostring(commitErr))
+		log("commit failed: %s", tostring(commitErr))
 	elseif not(commitResp.ok) then
-		log("commit rejected: " .. tostring(commitResp.error))
+		log("commit rejected: ", tostring(commitResp.error))
 	else
-		log("Committed id " .. tostring(id))
+		log("Committed id %s", tostring(id))
 	end
 
 	::continue::
--- end
+end
