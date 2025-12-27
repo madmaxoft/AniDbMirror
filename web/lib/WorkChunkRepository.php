@@ -104,4 +104,41 @@ final class WorkChunkRepository
         }
         return $out;
     }
+
+
+
+
+
+    public function getResultById(int $id): array
+    {
+        try {
+            $stmt = $this->db->prepare(
+                "SELECT status, detailsBlob, updatedAt
+                FROM Details
+                WHERE id = :id"
+            );
+            $stmt->execute([':id' => $id]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$row) {
+                return ['ok' => false, 'error' => 'not found'];
+            }
+
+            if ($row['status'] !== 'done' || $row['detailsBlob'] === null) {
+                return ['ok' => false, 'error' => 'not ready'];
+            }
+
+            return [
+                'ok' => true,
+                'blob' => $row['detailsBlob'],
+                'updatedAt' => $row['updatedAt'],
+            ];
+
+        } catch (PDOException $e) {
+            return [
+                'ok' => false,
+                'error' => 'database error: ' . $e->getMessage(),
+            ];
+        }
+    }
 }
