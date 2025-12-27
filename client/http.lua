@@ -78,6 +78,7 @@ function M.post(aUrl, aBody)
 			["Content-Type"] = "application/x-www-form-urlencoded",
 			["Content-Length"] = tostring(#aBody),
 			["Client-Name"] = config.clientName,
+			["Client-Auth"] = config.clientAuth,
 		},
 		source = ltn12.source.string(aBody),
 		sink = ltn12.sink.table(responseChunks),

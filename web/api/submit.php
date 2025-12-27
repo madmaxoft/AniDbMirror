@@ -1,5 +1,7 @@
 <?php
 require_once __DIR__ . '/../bootstrap.php';
+require_once __DIR__ . '/../auth.php';
+requireClientAuth();
 
 header('Content-Type: text/plain; charset=utf-8');
 

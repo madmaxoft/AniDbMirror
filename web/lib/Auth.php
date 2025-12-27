@@ -1,18 +1,30 @@
 <?php
-final class Auth
+// lib/auth.php
+
+require_once __DIR__ . '/Config.php';
+
+/**
+ * Requires client authentication using headers:
+ * - Client-Name
+ * - Client-Auth
+ *
+ * Exits with 401 if unauthorized.
+ */
+function requireClientAuth(): void
 {
-    public static function requireClientId(): string
-    {
-        $header = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
-        if (!preg_match('/^Bearer\s+(.+)$/', $header, $m)) {
-            Response::error('missing authorization', 401);
-        }
+    $config = Config::get();
+    $secrets = $config['clientSecrets'] ?? [];
 
-        $token = $m[1];
-        if (!in_array($token, Config::get()['apiKeys'], true)) {
-            Response::error('invalid authorization', 403);
-        }
+    $clientName  = $_SERVER['HTTP_CLIENT_NAME'] ?? null;
+    $clientToken = $_SERVER['HTTP_CLIENT_AUTH'] ?? null;
 
-        return hash('sha256', $token);
+    if (!$clientName || !$clientToken || !isset($secrets[$clientName]) || $secrets[$clientName] !== $clientToken) {
+        http_response_code(401);
+        header('Content-Type: text/plain; charset=utf-8');
+        echo 'unauthorized';
+        exit;
     }
+
+    // Optionally store for later use
+    $GLOBALS['authClientName'] = $clientName;
 }

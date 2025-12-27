@@ -10,6 +10,9 @@ final class Config
                 'pass' => 'password',
             ],
             'reservationTimeoutSeconds' => 172800,
+            'clientSecrets' => [
+                'client1' => 'client1-secret',
+            ],
         ];
     }
 }
