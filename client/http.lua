@@ -53,10 +53,11 @@ function M.get(aUrl)
 		headers =
 		{
 			["Client-Name"] = config.clientName,
+			["Client-Auth"] = config.clientAuth,
 		},
 	})
-	if not(ok) then
-		return nil, "http GET failed"
+	if (not(ok) or (code ~= 200)) then
+		return nil, string.format("http GET failed: http code %s", tostring(code))
 	end
 	local body = table.concat(responseChunks)
 	return parseLuaTable(body)
@@ -83,8 +84,8 @@ function M.post(aUrl, aBody)
 		source = ltn12.source.string(aBody),
 		sink = ltn12.sink.table(responseChunks),
 	})
-	if not(ok) then
-		return nil, "http POST failed"
+	if (not(ok) or (code ~= 200)) then
+		return nil, string.format("http POST failed: http code %s", tostring(code))
 	end
 	local body = table.concat(responseChunks)
 	return parseLuaTable(body)

@@ -43,11 +43,19 @@ end
 local function checkServer()
 	local url = config.apiBaseUrl .. "/status"
 	local resp, err = http.get(url)
-	if not resp then
+	if not(resp) then
 		return nil, err
 	end
 	if ((type(resp) ~= "table") or not(resp.ok)) then
 		return nil, "invalid status response"
+	end
+
+	resp, err = http.get(config.apiBaseUrl .. "/statusAuth")
+	if not(resp) then
+		return nil, err
+	end
+	if ((type(resp) ~= "table") or not(resp.ok)) then
+		return nil, "invalid statusAuth response"
 	end
 	return true
 end
@@ -89,7 +97,7 @@ local function commitWork(aId, aResult)
 	local url = config.apiBaseUrl .. "/submit"
 	local body =
 		"id=" .. tostring(aId) ..
-		"&detailsBlobB64=" .. utils.base64Encode(aResult)
+		"&detailsBlobB64=" .. utils.urlEncode(utils.base64Encode(aResult))
 	return http.post(url, body)
 end
 
@@ -104,7 +112,7 @@ local function fetchAniDbXml(aId)
 	assert(tonumber(aId))
 
 	-- Pause for a while not to overload the server:
-	socket.sleep(3)
+	socket.sleep(1)
 
 	local url = "http://api.anidb.net:9001/httpapi?client=localanidbmirror&clientver=3&protover=1&request=anime&aid=" .. aId
 	local response = {}
@@ -221,7 +229,7 @@ while true do
 	if not(commitResp) then
 		log("commit failed: %s", tostring(commitErr))
 	elseif not(commitResp.ok) then
-		log("commit rejected: ", tostring(commitResp.error))
+		log("commit rejected: %s", tostring(commitResp.error))
 	else
 		log("Committed id %s", tostring(id))
 	end
