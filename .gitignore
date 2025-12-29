@@ -1,8 +1,8 @@
 # Config files with sensitive data (DB logins, API servers):
-config.lua
+updateFromLocal/config.lua
 client/config.lua
 web/lib/Config.php
 
 # Local data files:
-anime-titles.xml.gz
+updateFromLocal/anime-titles.xml.gz
 client/AniDB/
