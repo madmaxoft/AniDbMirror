@@ -140,10 +140,10 @@ local function fetchAniDbXml(aId)
 	end
 
 	-- Save to file:
-	local path = string.format("AniDB/%.03d", math.floor(aId / 100))
+	local path = string.format("AniDB/%d", math.floor(aId / 100))
 	lfs.mkdir("AniDB")
 	lfs.mkdir(path)
-	local fileName = string.format("AniDB/%.03d/%d.xml", math.floor(aId / 100), aId)
+	local fileName = string.format("%s/%d.xml", path, aId)
 	local f = assert(io.open(fileName, "wb"))
 	f:write(response)
 	f:close()
