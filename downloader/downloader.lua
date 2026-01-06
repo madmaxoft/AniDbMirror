@@ -29,7 +29,7 @@ local gApiServer = arg[1] or "http://xoft.cz/AniDbMirror/api"
 
 
 --- Writes binary data to a file
-local function writeFile(aPath, aData)
+local function writeToFile(aPath, aData)
 	local f = assert(io.open(aPath, "wb"))
 	f:write(aData)
 	f:close()
@@ -42,6 +42,10 @@ end
 --- Fetches one dump batch from the server
 -- Returns parsed Lua table
 local function fetchDumpBatch(aAfterId, aLimit)
+	assert(type(aAfterId) == "number")
+	assert(type(aLimit) == "number")
+
+	-- Download the batch:
 	local url = string.format(
 		"%s/dump?afterId=%d&limit=%d",
 		gApiServer,
@@ -50,28 +54,24 @@ local function fetchDumpBatch(aAfterId, aLimit)
 	)
 
 	local responseChunks = {}
-
 	local ok, statusCode = http.request{
 		url = url,
 		sink = ltn12.sink.table(responseChunks),
 		method = "GET",
 	}
-
-	if (not ok) then
+	if not(ok) then
 		error("HTTP request failed")
 	end
-
 	if (statusCode ~= 200) then
-		error(string.format("HTTP status %d", statusCode))
+		error(string.format("HTTP status %s", tostring(statusCode)))
 	end
 
+	-- Parse the response as a Lua table:
 	local body = table.concat(responseChunks)
-
 	local chunk, err = load("return " .. body)
-	if (not chunk) then
+	if not(chunk) then
 		error("Failed to parse Lua response: " .. tostring(err))
 	end
-
 	return chunk()
 end
 
@@ -81,17 +81,20 @@ end
 
 --- Stores a single item to disk
 local function storeItem(aItem)
-	local idStr = tostring(aItem.id)
-	local prefix = string.sub(idStr, 1, 2)
+	assert(type(aItem) == "table")
 
+	local idStr = tostring(aItem.id)
+	local prefix
+	if (#idStr > 2) then
+		prefix = string.sub(idStr, 1, #idStr - 2)
+	else
+		prefix = "0"
+	end
 	local dirPath = string.format("AniDB/%s", prefix)
 	lfs.mkdir(dirPath)
-
 	local filePath = string.format("%s/%s.xml", dirPath, idStr)
-
 	local decoded = mime.unb64(aItem.resultB64)
-
-	writeFile(filePath, decoded)
+	writeToFile(filePath, decoded)
 end
 
 
