@@ -7,3 +7,4 @@ web/lib/Config.php
 updateFromLocal/anime-titles.xml.gz
 client/AniDB/
 *.zip
+downloader/AniDB/
